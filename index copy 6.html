@@ -1,0 +1,306 @@
+<!-- doctypeの記述が簡素に -->
+<!DOCTYPE html>
+<html lang="ja">
+	<head>
+		<meta charset="utf-8">
+		<title>タイトル</title>
+		
+		<style>
+			/* cssをここに */
+			input{
+				left: 0;
+				top: 0;
+				height: 50px;
+				width: 150px;
+			}
+			#player{
+				height: 50px;
+			}
+		</style>
+		<script src = "jquery-1.11.2.min.js"></script>
+	</head>
+
+	<body>
+		<!-- htmlタグをここに -->
+        <input type="button" id="btn" value="移動" onClick="move()">
+		<input type = "button" onClick = "move2()" value = "シャッフル" />
+		<select id="player">
+			<option value="0">プレイヤーの人数</option>
+			<option value="1">1人</option>
+			<option value="2">2人</option>
+			<option value="3">3人</option>
+			<option value="4">4人</option>
+		</select>
+		<input type = "button" onClick = "next()" value = "次へ" />
+			<div id="d1">
+			<span id="s_id1"></span>
+			<span id="s_id2"></span>
+			<span id="s_id3"></span>
+			<span id="s_id4"></span>
+		</div>
+		<span id="who_turn"></span>
+		<span id="time_message"></span>
+		<span id="message"></span>
+		<script>
+			//JavaScriptをここに
+		 var d1 = document.getElementById("d1");
+		 var message = document.getElementById("message");
+		 var player= document.getElementById("player");
+		 var options = document.querySelectorAll("#player option");
+		 var who_turn = document.getElementById("who_turn");
+		 var mem = 0;
+		 var f = 0, next_f = 0, answer_f = 0, mem_f=0;
+		 var count = 0;
+		 var turn_num;
+		 var s1 = 99, s2;
+		 var point = [];
+		 var PassSec, PassageID;
+ 		window.onload = function (){
+ 			for(var i = 0; i < 52; i++){
+ 				var tag = document.createElement("img");
+				tag.id = i;
+ 				tag.src = "images/"+ i +".png";
+ 				tag.style.position = "absolute";
+ 				tag.style.width = "72px";
+ 				tag.style.height = "108px";
+ 				tag.style.left = ((i % 13) * 75 + 100) + "px";
+				tag.style.top = (Math.floor(i / 13) * 115 + 110) + "px";
+				tag.style.zIndex = 1;
+				tag.onclick = function(){turn(this);};
+ 				d1.appendChild(tag);
+ 			}
+		 }
+		 //プレイ人数の選択
+		 player.addEventListener('change', function(){
+			 var c_index =  this.selectedIndex;
+			 mem = options[c_index].value;
+			 count = 0;
+			 turn_num = 1;
+			 who_turn.innerHTML = "";
+			 document.getElementById("s_id1").innerHTML = "";
+			 document.getElementById("s_id2").innerHTML = "";
+			 document.getElementById("s_id3").innerHTML = "";
+			 document.getElementById("s_id4").innerHTML = "";
+			 stopShowing();
+			 document.getElementById("time_message").innerHTML = "";
+			 if(mem==0){
+				 turn_reset();
+			}else if(mem==1){
+				turn_over();
+				startShowing();
+				mem_f = 1;
+			}else{
+				turn_over();
+				who_turn.innerHTML = "プレイヤー"+turn_num+"のターン";
+			}
+				for(var i = 0; i < mem; i++){
+					point[i+1] = 0;
+					var span = document.getElementById("s_id" + (i+1));
+					span.style.position = "absolute";
+					span.style.left = "1200px";
+					span.style.top = (115*(i+1)) + "px";
+					span.innerHTML = "プレイヤー" + (i+1) + "<br>枚数：" + point[i+1];
+				}
+		 });
+		//カードを裏返して元の位置に戻す
+		function turn_over(){
+			point[0] = 0;
+			for(var i = 0; i < 52; i++){
+				var tag = document.getElementById(i);
+				tag.src = "images/ura.png";
+				animove(i, ((i % 13) * 75 + 100), (Math.floor(i / 13) * 115 + 110));
+			}
+		}
+		//カードを表にして元の位置に戻す
+		function turn_reset(){
+			for(var i = 0; i < 52; i++){
+				var tag = document.getElementById(i);
+				tag.src = "images/"+ i +".png";
+				animove(i, ((i % 13) * 75 + 100), (Math.floor(i / 13) * 115 + 110));
+			}
+		}
+
+		 //並び順を変える
+		 function move(){
+			stopShowing();
+			document.getElementById("time_message").innerHTML = "";
+			if(f == 0){
+				vert();			//縦並び
+			} else {
+				side();			//横並び
+			}
+		 }
+		//縦並び
+		 function vert(){
+			for(var i = 0; i < 52; i++){
+				animove(i, (Math.floor( i / 13) * 75 + 100), ((i % 13) * 110 + 100));
+			}
+			f = 1;
+		}
+		//横並び
+		 function side(){
+			for(var i = 0; i < 52; i++){
+				animove(i, ((i % 13) * 75 + 100), (Math.floor(i / 13) * 110 + 100));
+			}
+			f = 0;
+		}
+
+		 //ランダムにする
+		function move2(){
+			if(mem_f==1){
+				stopShowing();
+				startShowing();
+			};
+			var c = [];
+			for(var i =0; i < 52; i++) c[i] = i;
+			for(var i = 0; i < 1000; i++){
+				var num1 = Math.floor(Math.random() * 52);
+				var num2 = Math.floor(Math.random() * 52);
+				var w = c[num1];
+				c[num1] = c[num2];
+				c[num2] = w;
+			}
+			for(var i = 0; i < 52; i++){
+				animove(c[i], ((i % 13) * 75 + 100),(Math.floor(i / 13) * 110 + 100));
+			 }
+		}
+
+		//カードをめくる
+		function turn(ele){
+			if(!(mem==0)){if(next_f==0){
+				var i = ele.id;
+				if(s1==i){
+					message.innerHTML = "別のカードをめくってください";
+				}else{
+					var tag = document.getElementById(i);
+					tag.src = "images/" + i + ".png";
+					count++;
+					check(i, tag);			//めくった回数の判定
+				}
+			}else{
+				message.innerHTML = "次へを押してください";
+			}}
+		}
+		//めくった回数の判定
+		function check(i){
+			switch(count){
+				case 1:
+					s1 = i;
+				break;
+				case 2:
+					s2 = i;
+					num_check();			//カードの判定
+				break;
+				default:
+					count = 0;
+			}
+		}
+		//カードの判定
+		function num_check(){
+			message.innerHTML = "";
+			if(s1%13==s2%13){
+				answer_f = 1;
+				if(point[0]==50){
+					correct(document.getElementById(s1), document.getElementById(s2));
+					message.innerHTML = "次へを押してください";
+				}else{
+					message.innerHTML = "正解";
+				}
+			}else{
+				message.innerHTML = "はずれ"
+				answer_f = 0;
+			}
+			next_f = 1;
+			count = 0;
+		}
+		//次に進む
+		function next(){
+			if(point[0]==52){
+					message.innerHTML = "";
+				if(mem_f==1){
+					stopShowing();
+					var msg = document.getElementById("time_message").innerHTML;
+					document.getElementById("time_message").innerHTML = "かかった時間は" + msg; 
+				}else{
+					var winner = 1;
+					var winner_card = point[1];
+					for(var i = 1; i < mem; i++){
+						if(winner < point[i+1]){
+							winner_card = point[i+1];
+							winner = i+1;
+						}
+					}
+					who_turn.innerHTML = "優勝はプレイヤー" + i;
+				}
+			}else{
+				if(next_f == 1){
+					var tag1 = document.getElementById(s1);
+					var tag2 = document.getElementById(s2);
+					if(answer_f==1){
+						correct(tag1, tag2);			//正解処理
+					}else{
+						incorrect(tag1, tag2);			//不正解処理
+					}
+					next_f = 0;
+					s1 = 99;
+					s2 = 99;
+				}
+			}
+		}
+		//正解処理
+		function correct(tag1, tag2){
+						var s_id_turn = "s_id" + turn_num;
+						point[turn_num] = point[turn_num] + 1;
+						tag1.style.zIndex = point[turn_num] + 100;
+						point[turn_num] = point[turn_num] + 1;
+						tag2.style.zIndex = point[turn_num] + 100;
+						animove(s1, 1120, (110*turn_num));
+						animove(s2, 1120, (110*turn_num));
+						document.getElementById(s_id_turn).innerHTML = "プレイヤー" + turn_num + "<br>枚数：" + point[turn_num];
+						answer_f = 0;
+						point[0] = point[0] + 2;
+					}
+		//不正解処理
+		function incorrect(tag1, tag2){
+						tag1.src = "images/ura.png";
+						tag2.src = "images/ura.png";
+						if(turn_num==mem){
+							turn_num = 1;
+						}else{
+							turn_num = turn_num+1;
+						}
+						if(mem_f==0) who_turn.innerHTML = "プレイヤー" + turn_num + "のターン";
+					}
+
+		//カードのアニメーション
+		function animove(id, left, top){
+			$("#" + id).animate({
+				"left":left + "px",
+				"top":top + "px"
+			},1000);
+		}
+ 
+		// 繰り返し処理の中身
+		function showPassage() {
+			PassSec++;   // カウントアップ
+			var msg = PassSec + "秒";   // 表示文作成
+			document.getElementById("time_message").innerHTML = msg;   // 表示更新
+		}
+		
+		// 繰り返し処理の開始
+		function startShowing() {
+			PassSec = 0;   // カウンタのリセット
+			PassageID = setInterval('showPassage()',1000);   // タイマーをセット(1000ms間隔)
+		}
+		
+		// 繰り返し処理の中止
+		function stopShowing() {
+			clearInterval( PassageID );   // タイマーのクリア
+		}
+		</script>
+	</body>
+</html>
+<!-- 
+	参考にしたサイト
+	タイマー：https://www.nishishi.com/javascript-tips/setinterval-passage.html
+ -->
